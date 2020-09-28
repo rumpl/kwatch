@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -30,42 +29,23 @@ func run() error {
 		return err
 	}
 
+	db, err := store.New()
+	if err != nil {
+		return err
+	}
+
 	// Not yet needed...
 	// s := services.New()
 	// server := NewServer()
 	// v1 := server.e.Group("/api")
 	// s.Register(v1)
 
+	inf := informer.NewDeploymentsInformer(db, clientset)
 	stopper := make(chan struct{})
-	if err := informer.StartDeploymentsInformer(clientset, stopper); err != nil {
-		return err
-	}
 	defer close(stopper)
 
-	// Store test
-	db, err := store.New()
-	if err != nil {
+	if err := inf.Listen(stopper); err != nil {
 		return err
-	}
-
-	dep := &store.Deployment{
-		Name:  "test",
-		Image: "image",
-	}
-	dep2 := &store.Deployment{
-		Name:  "test2",
-		Image: "image2",
-	}
-	db.Insert(dep)
-	db.Insert(dep2)
-
-	l, err := db.List()
-	if err != nil {
-		return err
-	}
-
-	for _, v := range l {
-		fmt.Println(v.Name, v.Image)
 	}
 
 	return nil
