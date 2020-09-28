@@ -37,7 +37,9 @@ func run() error {
 	// s.Register(v1)
 
 	stopper := make(chan struct{})
-	informer.StartDeploymentsInformer(clientset, stopper)
+	if err := informer.StartDeploymentsInformer(clientset, stopper); err != nil {
+		return err
+	}
 	defer close(stopper)
 
 	// Store test

@@ -11,11 +11,12 @@ import (
 )
 
 // StartDeploymentsInformer creates a new informer that looks for deployments
-func StartDeploymentsInformer(clientset *kubernetes.Clientset, stopper chan struct{}) {
-	factory := informers.NewSharedInformerFactory(clientset, 0)
-	informer := factory.Apps().V1().Deployments().Informer()
+func StartDeploymentsInformer(clientset *kubernetes.Clientset, stopper chan struct{}) error {
+	// panic
 	defer runtime.HandleCrash()
 
+	factory := informers.NewSharedInformerFactory(clientset, 0)
+	informer := factory.Apps().V1().Deployments().Informer()
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    onAdd,
 		DeleteFunc: onDelete,
@@ -24,8 +25,10 @@ func StartDeploymentsInformer(clientset *kubernetes.Clientset, stopper chan stru
 	go informer.Run(stopper)
 
 	if !cache.WaitForCacheSync(stopper, informer.HasSynced) {
-		runtime.HandleError(fmt.Errorf("Timed out"))
+		return fmt.Errorf("Timed out")
 	}
+
+	return nil
 }
 
 func onAdd(obj interface{}) {
